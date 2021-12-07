@@ -1,12 +1,12 @@
 plugins {
   //inlude the nodeJS plugin to execute nodejs and npm tasks
-  id "com.moowork.node" version "1.3.1"
+  id "com.github.node-gradle.node" version "3.1.1"
 }
 
 node {
 	download = true
-	version = "14.17.6"
-	npmVersion = "6.14.15"
+	version = "16.3.0"
+	npmVersion = "8.1.0"
 }
 
 //declare a build task
