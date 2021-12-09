@@ -1,0 +1,12 @@
+**/.idea
+**/.git
+**/.gitignore
+**/.DS_Store
+**/node_modules
+**/.dockerignore
+gradlew
+gradlew.bat
+gradle
+*.gradle
+Jenkinsfile
+Dockerfile*
