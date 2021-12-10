@@ -41,6 +41,20 @@ pipeline {
             steps([$class: 'BapSshPromotionPublisherPlugin']) {
                 input 'Deploy to server?'
                 milestone(1)
+                withCredentials ([usernamePassword(credentialsId: registryCredentials, usernameVariable: "USERNAME", passwordVariable: "USERPASS")]) {
+                    sshPublisher(
+                        continueOnError: false, failOnError: true,
+                        publishers: [
+                            sshPublisherDesc(
+                                configName: "sandbox",
+                                verbose: true,
+                                transfers: [
+                                    sshTransfer(execCommand: "docker login -u $USERNAME -p $USERPASS")
+                                ]
+                            )
+                        ]
+                    )
+                }
                 sshPublisher(
                     continueOnError: true, failOnError: false,
                     publishers: [
