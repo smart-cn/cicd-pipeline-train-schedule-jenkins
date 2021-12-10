@@ -1,18 +1,40 @@
 pipeline {
+    environment {
+        imagename = "smartuser/trainschedule"
+        registryCredentials = 'smart-dockerhub-credentials'
+        dockerImage = ''
+    }
     agent any
     stages {
         stage('Git clone') {
             steps {
-                echo 'Clonning project from the GIT'
-                deleteDir()
-                git 'https://github.com/smart-cn/cicd-pipeline-train-schedule-jenkins.git'
+                git branch: 'adddockerfile',
+                    url: 'https://github.com/smart-cn/cicd-pipeline-train-schedule-jenkins.git'
             }
         }
-        stage('Artifact build') {
-            steps {
-                echo 'Running build automation'
-                sh './gradlew build --no-daemon'
-                archiveArtifacts artifacts: 'dist/trainSchedule.zip'
+        stage('Building Docker image') {
+            steps{
+                script {
+                    dockerImage = docker.build imagename
+                }
+            }
+        }
+        stage('Deploy Docker Image') {
+            steps{
+                script {
+                    docker.withRegistry( '', registryCredentials ) {
+                    dockerImage.push("$BUILD_NUMBER")
+                    dockerImage.push('latest')
+                    }     
+                }
+            }
+        }
+        stage('Remove unused Docker images and containers') {
+            steps{
+                sh "docker rmi $imagename:$BUILD_NUMBER"
+                sh "docker rmi $imagename:latest"
+                sh "docker container prune -f"
+                sh "docker image prune -f"
             }
         }
     }
