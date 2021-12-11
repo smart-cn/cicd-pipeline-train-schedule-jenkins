@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Git clone') {
             steps {
-                git branch: 'adddockerfile',
+                git branch: 'master',
                     url: 'https://github.com/smart-cn/cicd-pipeline-train-schedule-jenkins.git'
             }
         }
