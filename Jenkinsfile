@@ -94,6 +94,7 @@ pipeline {
                                 verbose: true,
                                 transfers: [
                                     sshTransfer(sourceFiles: 'trains-k8s.yaml', remoteDirectory: '$BUILD_TAG'),
+                                    sshTransfer(execCommand: "sed -i 's/{{IMAGE_TAG}}/$BUILD_TAG/g' trains-k8s.yaml"),
                                     sshTransfer(execCommand: "kubectl apply -f $BUILD_TAG/trains-k8s.yaml"),
                                     sshTransfer(execCommand: "rm $BUILD_TAG/trains-k8s.yaml && rm -d $BUILD_TAG")
                                 ]
