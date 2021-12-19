@@ -96,6 +96,7 @@ pipeline {
                                     sshTransfer(execCommand: "kubectl create secret docker-registry train-docker-credentials --docker-username=$USERNAME --docker-password=$USERPASS || (kubectl delete secret train-docker-credentials && kubectl create secret docker-registry train-docker-credentials --docker-username=$USERNAME --docker-password=$USERPASS  || exit 1)"),
                                     sshTransfer(sourceFiles: 'trains-k8s.yaml', remoteDirectory: '$BUILD_TAG'),
                                     sshTransfer(execCommand: "sed -i 's/{{IMAGE_TAG}}/$BUILD_NUMBER/g' $BUILD_TAG/trains-k8s.yaml"),
+                                    sshTransfer(execCommand: 'IMAGE_NAME_ESCAPED=$(printf "%s\n" $IMAGE_NAME | sed -e "s/[\\/&]/\\\\&/g") && sed -i "s/{{IMAGE_NAME}}/$IMAGE_NAME_ESCAPED/g" $BUILD_TAG/trains-k8s.yaml'),
                                     sshTransfer(execCommand: "kubectl apply -f $BUILD_TAG/trains-k8s.yaml"),
                                     sshTransfer(execCommand: "rm $BUILD_TAG/trains-k8s.yaml && rm -d $BUILD_TAG")
                                 ]
