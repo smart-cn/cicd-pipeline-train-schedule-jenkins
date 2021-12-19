@@ -25,7 +25,7 @@ pipeline {
                     docker.withRegistry( '', registryCredentials ) {
                     dockerImage.push("$BUILD_NUMBER")
                     dockerImage.push('latest')
-                    }     
+                    }
                 }
             }
         }
@@ -94,10 +94,9 @@ pipeline {
                                 verbose: true,
                                 transfers: [
                                     sshTransfer(sourceFiles: 'trains-k8s.yaml', remoteDirectory: '$BUILD_TAG'),
-                                    sshTransfer(execComamnd: "cd $BUILD_TAG"),
-                                    sshTransfer(execCommand: "sed -i 's/{{IMAGE_TAG}}/$BUILD_NUMBER/g' trains-k8s.yaml"),
-                                    sshTransfer(execCommand: "kubectl apply -f trains-k8s.yaml"),
-                                    sshTransfer(execCommand: "rm trains-k8s.yaml && cd .. && rm -d $BUILD_TAG")
+                                    sshTransfer(execCommand: "sed -i 's/{{IMAGE_TAG}}/$BUILD_NUMBER/g' $BUILD_TAG/trains-k8s.yaml"),
+                                    sshTransfer(execCommand: "kubectl apply -f $BUILD_TAG/trains-k8s.yaml"),
+                                    sshTransfer(execCommand: "rm $BUILD_TAG/trains-k8s.yaml && rm -d $BUILD_TAG")
                                 ]
                             )
                         ]
@@ -107,3 +106,4 @@ pipeline {
         }
     }
 }
+
