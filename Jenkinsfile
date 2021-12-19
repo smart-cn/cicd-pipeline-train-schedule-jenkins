@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Git clone') {
             steps {
-                git branch: 'master',
+                git branch: 'k8sdeploy',
                     url: 'https://github.com/smart-cn/cicd-pipeline-train-schedule-jenkins.git'
             }
         }
@@ -37,9 +37,8 @@ pipeline {
                 sh "docker image prune -f"
             }
         }
-        stage('Deploy new Docker image to server'){
+        stage('Deploy new Docker image to staging server'){
             steps([$class: 'BapSshPromotionPublisherPlugin']) {
-                input 'Deploy to server?'
                 milestone(1)
                 withCredentials ([usernamePassword(credentialsId: registryCredentials, usernameVariable: "USERNAME", passwordVariable: "USERPASS")]) {
                     sshPublisher(
@@ -80,6 +79,28 @@ pipeline {
                         )
                     ]
                 )
+            }
+        }
+        stage('Deploy to production (k8s)'){
+            steps([$class: 'BapSshPromotionPublisherPlugin']) {
+                input 'Deploy to production?'
+                milestone(2)
+                withCredentials ([usernamePassword(credentialsId: registryCredentials, usernameVariable: "USERNAME", passwordVariable: "USERPASS")]) {
+                    sshPublisher(
+                        continueOnError: false, failOnError: true,
+                        publishers: [
+                            sshPublisherDesc(
+                                configName: "k8s-prod",
+                                verbose: true,
+                                transfers: [
+                                    sshTransfer(sourceFiles: 'trains-k8s.yaml', remoteDirectory: '$BUILD_TAG'),
+                                    sshTransfer(execCommand: "kubectl apply -f $BUILD_TAG/trains-k8s.yaml"),
+                                    sshTransfer(execCommand: "rm $BUILD_TAG/trains-k8s.yaml && rm -d $BUILD_TAG")
+                                ]
+                            )
+                        ]
+                    )
+                }
             }
         }
     }
