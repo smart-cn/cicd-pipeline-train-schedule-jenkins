@@ -93,6 +93,7 @@ pipeline {
                                 configName: "k8s-prod",
                                 verbose: true,
                                 transfers: [
+                                    sshTransfer(execCommand: "kubectl create secret docker-registry train-docker-credentials --docker-username=$USERNAME --docker-password=$USERPASS || (kubectl delete secret train-docker-credentials && kubectl create secret docker-registry train-docker-credentials --docker-username=$USERNAME --docker-password=$USERPASS  || exit 1)"),
                                     sshTransfer(sourceFiles: 'trains-k8s.yaml', remoteDirectory: '$BUILD_TAG'),
                                     sshTransfer(execCommand: "sed -i 's/{{IMAGE_TAG}}/$BUILD_NUMBER/g' $BUILD_TAG/trains-k8s.yaml"),
                                     sshTransfer(execCommand: "kubectl apply -f $BUILD_TAG/trains-k8s.yaml"),

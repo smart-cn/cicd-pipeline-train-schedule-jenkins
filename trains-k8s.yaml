@@ -34,3 +34,5 @@ spec:
         image: smartuser/trainschedule:{{IMAGE_TAG}}
         ports:
         - containerPort: 3000
+      imagePullSecrets:
+      - name: train-docker-credentials
