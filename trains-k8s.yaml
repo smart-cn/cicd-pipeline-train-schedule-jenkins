@@ -34,5 +34,12 @@ spec:
         image: ${IMAGE_NAME}:${IMAGE_TAG}
         ports:
         - containerPort: 3000
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+          periodSeconds: 10
       imagePullSecrets:
       - name: train-docker-credentials
