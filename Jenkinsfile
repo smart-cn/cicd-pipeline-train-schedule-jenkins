@@ -80,7 +80,7 @@ pipeline {
                 )
             }
         }
-        stage('Deploy to production (k8s)'){
+        stage('Deploy to production (k8s)(manual confirmation required)'){
             steps([$class: 'BapSshPromotionPublisherPlugin']) {
                 input 'Deploy to production?'
                 milestone(1)
