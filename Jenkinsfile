@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Git clone') {
             steps {
-                git branch: 'master',
+                git branch: 'k8sdeploy',
                     url: 'https://github.com/smart-cn/cicd-pipeline-train-schedule-jenkins.git'
             }
         }
@@ -25,7 +25,7 @@ pipeline {
                     docker.withRegistry( '', registryCredentials ) {
                     dockerImage.push("$BUILD_NUMBER")
                     dockerImage.push('latest')
-                    }     
+                    }
                 }
             }
         }
@@ -37,10 +37,8 @@ pipeline {
                 sh "docker image prune -f"
             }
         }
-        stage('Deploy new Docker image to server'){
+        stage('Deploy new Docker image to staging server'){
             steps([$class: 'BapSshPromotionPublisherPlugin']) {
-                input 'Deploy to server?'
-                milestone(1)
                 withCredentials ([usernamePassword(credentialsId: registryCredentials, usernameVariable: "USERNAME", passwordVariable: "USERPASS")]) {
                     sshPublisher(
                         continueOnError: false, failOnError: true,
@@ -82,5 +80,31 @@ pipeline {
                 )
             }
         }
+        stage('Deploy to production (k8s)(manual confirmation required)'){
+            steps([$class: 'BapSshPromotionPublisherPlugin']) {
+                input 'Deploy to production?'
+                milestone(1)
+                withCredentials ([usernamePassword(credentialsId: registryCredentials, usernameVariable: "USERNAME", passwordVariable: "USERPASS")]) {
+                    sshPublisher(
+                        continueOnError: false, failOnError: true,
+                        publishers: [
+                            sshPublisherDesc(
+                                configName: "k8s-prod",
+                                verbose: true,
+                                transfers: [
+                                    sshTransfer(execCommand: "kubectl create secret docker-registry train-docker-credentials --docker-username=$USERNAME --docker-password=$USERPASS || (kubectl delete secret train-docker-credentials && kubectl create secret docker-registry train-docker-credentials --docker-username=$USERNAME --docker-password=$USERPASS  || exit 1)"),
+                                    sshTransfer(sourceFiles: 'trains-k8s.yaml', remoteDirectory: '$BUILD_TAG'),
+                                    sshTransfer(execCommand: "export IMAGE_TAG=$BUILD_NUMBER && originalfile='$BUILD_TAG/trains-k8s.yaml' && tmpfile=\$(mktemp) && cat \$originalfile | envsubst '\${IMAGE_TAG}' > \$tmpfile && mv -f \$tmpfile \$originalfile"),
+                                    sshTransfer(execCommand: "export IMAGE_NAME=$imagename && originalfile='$BUILD_TAG/trains-k8s.yaml' && tmpfile=\$(mktemp) && cat \$originalfile | envsubst '\${IMAGE_NAME}' > \$tmpfile && mv -f \$tmpfile \$originalfile"),
+                                    sshTransfer(execCommand: "kubectl apply -f $BUILD_TAG/trains-k8s.yaml"),
+                                    sshTransfer(execCommand: "rm $BUILD_TAG/trains-k8s.yaml && rm -d $BUILD_TAG")
+                                ]
+                            )
+                        ]
+                    )
+                }
+            }
+        }
     }
 }
+
