@@ -39,7 +39,6 @@ pipeline {
         }
         stage('Deploy new Docker image to staging server'){
             steps([$class: 'BapSshPromotionPublisherPlugin']) {
-                milestone(1)
                 withCredentials ([usernamePassword(credentialsId: registryCredentials, usernameVariable: "USERNAME", passwordVariable: "USERPASS")]) {
                     sshPublisher(
                         continueOnError: false, failOnError: true,
@@ -84,7 +83,7 @@ pipeline {
         stage('Deploy to production (k8s)'){
             steps([$class: 'BapSshPromotionPublisherPlugin']) {
                 input 'Deploy to production?'
-                milestone(2)
+                milestone(1)
                 withCredentials ([usernamePassword(credentialsId: registryCredentials, usernameVariable: "USERNAME", passwordVariable: "USERPASS")]) {
                     sshPublisher(
                         continueOnError: false, failOnError: true,
